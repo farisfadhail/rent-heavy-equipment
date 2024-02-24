@@ -1,0 +1,12 @@
+{
+	"canisters": {
+		"rent_heavy_equipment": {
+			"type": "custom",
+			"main": "src/index.ts",
+			"candid": "src/index.did",
+			"build": "npx azle rent_heavy_equipment",
+			"wasm": ".azle/rent_heavy_equipment/rent_heavy_equipment.wasm",
+			"gzip": true
+		}
+	}
+}

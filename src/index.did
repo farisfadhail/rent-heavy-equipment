@@ -1,0 +1,7 @@
+service: () -> {
+    addAdditionalCost: (principal, record {additionalCost:int64}) -> (variant {Ok:record {id:principal; renter:text; endDate:int64; isCompleted:bool; owner:text; equipment:text; createdAt:nat64; deposit:int64; updatedAt:opt nat64; rentalFee:int64; startDate:int64}; Err:text});
+    createContract: (record {renter:text; endDate:int64; owner:text; equipment:text; deposit:int64; rentalFee:int64; startDate:int64}) -> (variant {Ok:record {id:principal; renter:text; endDate:int64; isCompleted:bool; owner:text; equipment:text; createdAt:nat64; deposit:int64; updatedAt:opt nat64; rentalFee:int64; startDate:int64}; Err:text});
+    getAllContracts: () -> (vec record {id:principal; renter:text; endDate:int64; isCompleted:bool; owner:text; equipment:text; createdAt:nat64; deposit:int64; updatedAt:opt nat64; rentalFee:int64; startDate:int64}) query;
+    getContractById: (principal) -> (variant {Ok:opt record {id:principal; renter:text; endDate:int64; isCompleted:bool; owner:text; equipment:text; createdAt:nat64; deposit:int64; updatedAt:opt nat64; rentalFee:int64; startDate:int64}; Err:text}) query;
+    updateStatusContract: (principal, record {isCompleted:bool}) -> (variant {Ok:record {id:principal; renter:text; endDate:int64; isCompleted:bool; owner:text; equipment:text; createdAt:nat64; deposit:int64; updatedAt:opt nat64; rentalFee:int64; startDate:int64}; Err:text});
+}
