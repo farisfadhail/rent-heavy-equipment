@@ -1,4 +1,5 @@
 import { bool, Canister, Err, ic, int, int64, nat64, None, Null, Ok, Opt, Principal, query, Record, Result, StableBTreeMap, text, update, Vec, Void } from "azle";
+import { v4 as uuidv4 } from 'uuid';
 
 const rentalContract = Record({
 	id: Principal,
@@ -43,13 +44,18 @@ export default Canister({
 		const rent = rentStorage.get(id);
 
 		if ("None" in rent) {
-			return Err(`A rent contract with id=${id} not found`);
+			return Err({ NotFound: `A rent contract with id=${id} not found` });
 		}
 
 		return Ok(rent);
 	}),
 
 	createContract: update([contractCreatePayload], Result(rentalContract, text), (payload) => {
+		// Validate inputs
+		if (!payload.equipment || !payload.owner || !payload.renter || !payload.startDate || !payload.endDate || !payload.rentalFee || !payload.deposit) {
+			return Err({ InvalidInput: 'Missing required fields in the contract object' });
+		}
+
 		const contract: typeof rentalContract.tsType = { id: generateId(), createdAt: ic.time(), updatedAt: None, isCompleted: false, ...payload };
 		rentStorage.insert(contract.id, contract);
 
@@ -60,12 +66,13 @@ export default Canister({
 		const rentOpt = rentStorage.get(id);
 
 		if ("None" in rentOpt) {
-			return Err(`A rent contract with id=${id} not found`);
+			return Err({ NotFound: `A rent contract with id=${id} not found` });
 		}
 
 		const rent = rentOpt.Some;
 
-		const updatedContract = Object.assign(rent, Object.assign(payload, { updatedAt: ic.time(), deposit: 0 }));
+		// Preserve the deposit
+		const updatedContract = Object.assign(rent, Object.assign(payload, { updatedAt: ic.time() }));
 		rentStorage.insert(rent.id, updatedContract);
 
 		return Ok(updatedContract);
@@ -75,7 +82,7 @@ export default Canister({
 		const rentOpt = rentStorage.get(id);
 
 		if ("None" in rentOpt) {
-			return Err(`A rent contract with id=${id} not found`);
+			return Err({ NotFound: `A rent contract with id=${id} not found` });
 		}
 
 		const rent = rentOpt.Some;
@@ -88,7 +95,7 @@ export default Canister({
 });
 
 function generateId(): Principal {
-	const randomBytes = new Array(29).fill(0).map((_) => Math.floor(Math.random() * 256));
-
+	// Use a more secure method like generating a UUID using a cryptographic library
+	const randomBytes = uuidv4();
 	return Principal.fromUint8Array(Uint8Array.from(randomBytes));
 }
