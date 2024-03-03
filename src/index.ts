@@ -1,5 +1,5 @@
-import { bool, Canister, Err, ic, int, int64, nat64, None, Null, Ok, Opt, Principal, query, Record, Result, StableBTreeMap, text, update, Vec, Void } from "azle";
-import { v4 as uuidv4 } from 'uuid';
+import { bool, Canister, Err, ic, int, int64, nat, nat64, None, Null, Ok, Opt, Principal, query, Record, Result, StableBTreeMap, text, update, Variant, Vec, Void } from "azle";
+import { v4 as uuidv4 } from "uuid";
 
 const rentalContract = Record({
 	id: Principal,
@@ -33,6 +33,11 @@ const additionalCostPayload = Record({
 	additionalCost: int64,
 });
 
+const rentContractError = Variant({
+	NotFound: text,
+	InvalidInput: text,
+});
+
 const rentStorage = StableBTreeMap(0, Principal, rentalContract);
 
 export default Canister({
@@ -40,7 +45,7 @@ export default Canister({
 		return rentStorage.values();
 	}),
 
-	getContractById: query([Principal], Result(Opt(rentalContract), text), (id) => {
+	getContractById: query([Principal], Result(Opt(rentalContract), rentContractError), (id) => {
 		const rent = rentStorage.get(id);
 
 		if ("None" in rent) {
@@ -50,10 +55,10 @@ export default Canister({
 		return Ok(rent);
 	}),
 
-	createContract: update([contractCreatePayload], Result(rentalContract, text), (payload) => {
+	createContract: update([contractCreatePayload], Result(rentalContract, rentContractError), (payload) => {
 		// Validate inputs
 		if (!payload.equipment || !payload.owner || !payload.renter || !payload.startDate || !payload.endDate || !payload.rentalFee || !payload.deposit) {
-			return Err({ InvalidInput: 'Missing required fields in the contract object' });
+			return Err({ InvalidInput: "Missing required fields in the contract object" });
 		}
 
 		const contract: typeof rentalContract.tsType = { id: generateId(), createdAt: ic.time(), updatedAt: None, isCompleted: false, ...payload };
@@ -62,7 +67,7 @@ export default Canister({
 		return Ok(contract);
 	}),
 
-	updateStatusContract: update([Principal, updateStatusPayload], Result(rentalContract, text), (id, payload) => {
+	updateStatusContract: update([Principal, updateStatusPayload], Result(rentalContract, rentContractError), (id, payload) => {
 		const rentOpt = rentStorage.get(id);
 
 		if ("None" in rentOpt) {
@@ -78,7 +83,7 @@ export default Canister({
 		return Ok(updatedContract);
 	}),
 
-	addAdditionalCost: update([Principal, additionalCostPayload], Result(rentalContract, text), (id, payload) => {
+	addAdditionalCost: update([Principal, additionalCostPayload], Result(rentalContract, rentContractError), (id, payload) => {
 		const rentOpt = rentStorage.get(id);
 
 		if ("None" in rentOpt) {
@@ -96,6 +101,6 @@ export default Canister({
 
 function generateId(): Principal {
 	// Use a more secure method like generating a UUID using a cryptographic library
-	const randomBytes = uuidv4();
+	const randomBytes = Array.from(uuidv4(), (c) => c.charCodeAt(0));
 	return Principal.fromUint8Array(Uint8Array.from(randomBytes));
 }
