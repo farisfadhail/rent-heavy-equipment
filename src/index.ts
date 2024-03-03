@@ -38,6 +38,8 @@ const rentContractError = Variant({
 	InvalidInput: text,
 });
 
+type rentContractError = typeof rentContractError.tsType;
+
 const rentStorage = StableBTreeMap(0, Principal, rentalContract);
 
 export default Canister({
